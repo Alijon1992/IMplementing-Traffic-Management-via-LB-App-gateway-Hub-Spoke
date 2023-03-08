@@ -1,0 +1,146 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "publicIPAddresses_deoppip_name": {
+            "defaultValue": "deoppip",
+            "type": "String"
+        },
+        "loadBalancers_deop104_cc_lb4_name": {
+            "defaultValue": "deop104-cc-lb4",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2022-07-01",
+            "name": "[parameters('publicIPAddresses_deoppip_name')]",
+            "location": "canadacentral",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "ipAddress": "20.151.114.152",
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers/backendAddressPools",
+            "apiVersion": "2022-07-01",
+            "name": "[concat(parameters('loadBalancers_deop104_cc_lb4_name'), '/', parameters('loadBalancers_deop104_cc_lb4_name'), '-be1')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_deop104_cc_lb4_name'))]"
+            ],
+            "properties": {
+                "loadBalancerBackendAddresses": [
+                    {
+                        "name": "deop104-cc-rg1_deop104vm0268ipconfig1",
+                        "properties": {}
+                    },
+                    {
+                        "name": "deop104-cc-rg1_deop104vm1302ipconfig1",
+                        "properties": {}
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2022-07-01",
+            "name": "[parameters('loadBalancers_deop104_cc_lb4_name')]",
+            "location": "canadacentral",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_deoppip_name'))]",
+                "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancers_deop104_cc_lb4_name'), concat(parameters('loadBalancers_deop104_cc_lb4_name'), '-be1'))]"
+            ],
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "deop104-cc-pip4",
+                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_deop104_cc_lb4_name')), '/frontendIPConfigurations/deop104-cc-pip4')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_deoppip_name'))]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[concat(parameters('loadBalancers_deop104_cc_lb4_name'), '-be1')]",
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancers_deop104_cc_lb4_name'), concat(parameters('loadBalancers_deop104_cc_lb4_name'), '-be1'))]",
+                        "properties": {
+                            "loadBalancerBackendAddresses": [
+                                {
+                                    "name": "deop104-cc-rg1_deop104vm0268ipconfig1",
+                                    "properties": {}
+                                },
+                                {
+                                    "name": "deop104-cc-rg1_deop104vm1302ipconfig1",
+                                    "properties": {}
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "[concat(parameters('loadBalancers_deop104_cc_lb4_name'), '-lbrule1')]",
+                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_deop104_cc_lb4_name')), concat('/loadBalancingRules/', parameters('loadBalancers_deop104_cc_lb4_name'), '-lbrule1'))]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_deop104_cc_lb4_name')), '/frontendIPConfigurations/deop104-cc-pip4')]"
+                            },
+                            "frontendPort": 80,
+                            "backendPort": 80,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "Tcp",
+                            "enableTcpReset": false,
+                            "loadDistribution": "Default",
+                            "disableOutboundSnat": true,
+                            "backendAddressPool": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancers_deop104_cc_lb4_name'), concat(parameters('loadBalancers_deop104_cc_lb4_name'), '-be1'))]"
+                            },
+                            "backendAddressPools": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancers_deop104_cc_lb4_name'), concat(parameters('loadBalancers_deop104_cc_lb4_name'), '-be1'))]"
+                                }
+                            ],
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_deop104_cc_lb4_name')), concat('/probes/', parameters('loadBalancers_deop104_cc_lb4_name'), '-hp1'))]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[concat(parameters('loadBalancers_deop104_cc_lb4_name'), '-hp1')]",
+                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_deop104_cc_lb4_name')), concat('/probes/', parameters('loadBalancers_deop104_cc_lb4_name'), '-hp1'))]",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 80,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 1,
+                            "probeThreshold": 1
+                        }
+                    }
+                ],
+                "inboundNatRules": [],
+                "outboundRules": [],
+                "inboundNatPools": []
+            }
+        }
+    ]
+}
