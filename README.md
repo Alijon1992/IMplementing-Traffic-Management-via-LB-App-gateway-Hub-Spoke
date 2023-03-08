@@ -70,5 +70,6 @@ Architecture Diagram
 
 TOPOLOGY
 
-![Screenshot 2023-03-07 at 9 13 42 PM](https://user-images.githubusercontent.com/121365233/223602263-d06a44ee-34b5-42fd-880b-020d61e621ab.png)
+![Screenshot 2023-03-07 at 10 47 07 PM](https://user-images.githubusercontent.com/121365233/223614711-497cf7de-c651-485b-be3d-9312bb722a22.png)
+
 
